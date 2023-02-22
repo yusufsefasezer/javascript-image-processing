@@ -1,11 +1,10 @@
-
 # JavaScript Image Processing
-Image filter developed with JavaScript and HTML5
+JavaScript image processing examples
 
 # Demo
-www.yusufsezer.com/javascript-image-processing/
+https://www.yusufsezer.com/projects/javascript-image-processing/
 
 # License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details
 
-Created by [Yusuf SEZER](http://www.yusufsezer.com)
+Created by [Yusuf Sezer](https://www.yusufsezer.com)
