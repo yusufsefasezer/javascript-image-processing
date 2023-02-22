@@ -1,11 +1,11 @@
 /*
  *    ysFilters.js - YS JavaScript Filters
  *    Author: Yusuf SEZER <yusufsezer@mail.com>
- *    Version: v0.1.0
- *    Url: https://github.com/yusufsefasezer
+ *    Version: v0.1.1
+ *    Url: https://www.yusufsezer.com
  *    License(s): MIT
  */
-"use strict";
+'use strict';
 
 var ysFilters = function () {
     var imageData = null;

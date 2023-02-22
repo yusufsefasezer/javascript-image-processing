@@ -1,66 +1,105 @@
-"use strict";
-var imageWrapper = null,
-    imageArea = null,
-    imageCanvas = null,
-    imageContext = null,
-    imageFile = null,
+'use strict';
+
+var wrapper = {},
+    area = {},
+    canvas = {},
+    context = {},
+    file = {},
     imageMIMETypes = [],
-    filterList = [],
-    filterArea = null,
+    footer = {},
     imageFilter = null;
 
-function init() {
-    imageWrapper = document.querySelector("#wrapper");
-    imageArea = document.querySelector("#area");
-    imageCanvas = document.querySelector("#image");
-    imageContext = imageCanvas.getContext("2d");
-    imageFile = document.querySelector("#file");
-    imageMIMETypes = ["image/jpeg", "image/png", "image/gif"];
-    filterList = ["BlackAndWhite", "Brightness", "Contrast", "Grayscale", "Invert", "Noise", "Sepia", "Threshold", "Vintage", "Blur", "Sharpen", "Sobel", "Prewitt", "Reset"];
-    filterArea = document.querySelector("footer");
+function filter() {
+    var currentFilter = null;
+
+    switch (this.textContent) {
+        case 'BlackAndWhite':
+            currentFilter = imageFilter.blackAndWhite();
+            break;
+        case 'Brightness':
+            currentFilter = imageFilter.brightness();
+            break;
+        case 'Contrast':
+            currentFilter = imageFilter.contrast();
+            break;
+        case 'Grayscale':
+            currentFilter = imageFilter.grayscale();
+            break;
+        case 'Invert':
+            currentFilter = imageFilter.invert();
+            break;
+        case 'Noise':
+            currentFilter = imageFilter.noise();
+            break;
+        case 'Sepia':
+            currentFilter = imageFilter.sepia();
+            break;
+        case 'Threshold':
+            currentFilter = imageFilter.threshold();
+            break;
+        case 'Vintage':
+            currentFilter = imageFilter.vintage();
+            break;
+        case 'Blur':
+            currentFilter = imageFilter.blur();
+            break;
+        case 'Sharpen':
+            currentFilter = imageFilter.sharpen();
+            break;
+        case 'Sobel':
+            currentFilter = imageFilter.sobel();
+            break;
+        case 'Prewitt':
+            currentFilter = imageFilter.prewitt();
+            break;
+        default:
+            return imageToCanvas(file.files[0]);
+            break;
+    }
+
+    context.putImageData(currentFilter.getImageData(), 0, 0);
+}
+
+function initElem() {
+    wrapper = document.getElementById('wrapper');
+    area = document.getElementById('area');
+    canvas = document.getElementById('image');
+    context = canvas.getContext('2d');
+    file = document.getElementById('file');
+    imageMIMETypes = ['image/jpeg', 'image/png', 'image/gif'];
+    var filters = ['BlackAndWhite', 'Brightness', 'Contrast', 'Grayscale', 'Invert', 'Noise', 'Sepia', 'Threshold', 'Vintage', 'Blur', 'Sharpen', 'Sobel', 'Prewitt', 'Reset'];
+    footer = document.querySelector('footer');
     imageFilter = new ysFilters();
 
-    imageWrapper.onclick = function () {
-        imageFile.click();
-    };
-
-    imageWrapper.ondrop = function (evt) {
-        imageFile.files = evt.dataTransfer.files;
-        evt.preventDefault();
+    var fragment = document.createDocumentFragment();
+    for (var index = 0, length = filters.length; index < length; index++) {
+        var newButton = document.createElement('button');
+        newButton.textContent = filters[index];
+        newButton.addEventListener('click', filter);
+        fragment.appendChild(newButton);
     }
-
-    imageWrapper.ondragover = function (evt) {
-        return false;
-    }
-
-    imageFile.onchange = checkAdd;
-
-    addFilterButton();
-
+    footer.appendChild(fragment);
 }
 
-function checkAdd() {
-    if (this.files.length != 1) return;
-
-    var currentFile = this.files[0];
-
-    if (!checkMimeType(currentFile.type, imageMIMETypes)) {
-        return;
-    }
-
-    imageToCanvas(currentFile);
-
-    imageArea.style.display = "none";
-    filterArea.style.display = "block";
-
-    return;
+function onWrapperClick() {
+    file.click();
 }
 
-function checkMimeType(currentType, allowedTypes) {
+function onWrapperDrop(evt) {
+    file.files = evt.dataTransfer.files;
+    evt.preventDefault();
+}
+
+function onWrapperDragOver() {
+    return false;
+}
+
+function checkMimeType(fileType, allowedTypes) {
     var check = false;
 
-    for (var index = 0, fileType; fileType = allowedTypes[index]; index++) {
-        if (currentType == fileType) {
+    for (var index = 0, length = allowedTypes.length; index < length; index++) {
+        var currentType = allowedTypes[index];
+        if (fileType == currentType) {
             return true;
         }
     }
@@ -68,99 +107,55 @@ function checkMimeType(currentType, allowedTypes) {
     return check;
 }
 
-function imageToCanvas(currentFile) {
+function onImageLoad() {
+    var maxWidth = 600;
+    if (this.width < maxWidth) maxWidth = this.width;
+    var ratio = this.height / maxWidth;
 
+    canvas.width = this.width / ratio;
+    canvas.height = this.height / ratio;
+
+    wrapper.style.width = canvas.width + 'px';
+    wrapper.style.height = canvas.height + 'px';
+
+    context.drawImage(this, 0, 0, canvas.width, canvas.height);
+    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    imageFilter.setImageData(imageData);
+}
+
+function onReaderLoad() {
+    var image = new Image();
+    image.src = this.result;
+    image.addEventListener('load', onImageLoad);
+}
+
+function imageToCanvas(currentFile) {
     var reader = new FileReader();
     reader.readAsDataURL(currentFile);
-
-    reader.onload = function () {
-        var img = new Image();
-        img.src = this.result;
-
-        img.onload = function () {
-            var maxWidth = 600;
-            if (img.width < maxWidth) maxWidth = img.width;
-            var ratio = img.height / maxWidth;
-
-            imageCanvas.width = img.width / ratio;
-            imageCanvas.height = img.height / ratio;
-
-            imageWrapper.style.width = imageCanvas.width + "px";
-            imageWrapper.style.height = imageCanvas.height + "px";
-
-            imageContext.drawImage(img, 0, 0, imageCanvas.width, imageCanvas.height);
-            var imageData = imageContext.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
-            imageFilter.setImageData(imageData);
-        }
-
-    }
-
-    return;
+    reader.addEventListener('load', onReaderLoad);
 }
 
-function addFilterButton() {
+function onFileChange() {
+    if (this.files.length != 1) return;
 
-    for (let index = 0; index < filterList.length; index++) {
-        var btn = document.createElement("button");
-        btn.innerHTML = filterList[index];
-        btn.onclick = filterIt;
-        filterArea.appendChild(btn);
-    }
+    var currentFile = this.files[0];
+    if (!checkMimeType(currentFile.type, imageMIMETypes)) return;
+    imageToCanvas(currentFile);
 
-    return;
+    area.style.display = 'none';
+    footer.style.display = 'block';
 }
 
-function filterIt() {
-    var currentFilter = null;
-    switch (this.innerHTML) {
-        case "BlackAndWhite":
-            currentFilter = imageFilter.blackAndWhite();
-            break;
-        case "Brightness":
-            currentFilter = imageFilter.brightness();
-            break;
-        case "Contrast":
-            currentFilter = imageFilter.contrast();
-            break;
-        case "Grayscale":
-            currentFilter = imageFilter.grayscale();
-            break;
-        case "Invert":
-            currentFilter = imageFilter.invert();
-            break;
-        case "Noise":
-            currentFilter = imageFilter.noise();
-            break;
-        case "Sepia":
-            currentFilter = imageFilter.sepia();
-            break;
-        case "Threshold":
-            currentFilter = imageFilter.threshold();
-            break;
-        case "Vintage":
-            currentFilter = imageFilter.vintage();
-            break;
-        case "Blur":
-            currentFilter = imageFilter.blur();
-            break;
-        case "Sharpen":
-            currentFilter = imageFilter.sharpen();
-            break;
-        case "Sobel":
-            currentFilter = imageFilter.sobel();
-            break;
-        case "Prewitt":
-            currentFilter = imageFilter.prewitt();
-            break;
-        default:
-            imageToCanvas(imageFile.files[0]);
-            return;
-            break;
-    }
-
-    imageContext.putImageData(currentFilter.getImageData(), 0, 0);
-
-    return;
+function initEvent() {
+    wrapper.addEventListener('click', onWrapperClick);
+    wrapper.addEventListener('drop', onWrapperDrop);
+    wrapper.addEventListener('dragover', onWrapperDragOver);
+    file.addEventListener('change', onFileChange);
 }
 
-window.onload = init;
+function init() {
+    initElem();
+    initEvent();
+}
+
+window.addEventListener('DOMContentLoaded', init);
